@@ -21,6 +21,10 @@ class MyCanvasView(context: Context) : View(context) {
     private var currentY = 0f
     private val touchTolerance = ViewConfiguration.get(context).scaledTouchSlop
     private var path = Path()
+    // Path representing the drawing so far
+    private val drawing = Path()
+    // Path representing what's currently being drawn
+    private val curPath = Path()
     // Set up the paint with which to draw.
     private val paint = Paint().apply {
         color = drawColor
@@ -42,14 +46,24 @@ class MyCanvasView(context: Context) : View(context) {
         extraBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         extraCanvas = Canvas(extraBitmap)
         extraCanvas.drawColor(backgroundColor)
+        // Draw a frame around the canvas
+        extraCanvas.drawRect(frame, paint)
+        // Draw the drawing so far
+        extraCanvas.drawPath(drawing, paint)
+        // Draw any current squiggle
+        extraCanvas.drawPath(curPath, paint)
         super.onSizeChanged(width, height, oldWidth, oldHeight)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawBitmap(extraBitmap,0f,0f,null)
+        // Add the current path to the drawing so far
+        drawing.addPath(curPath)
         // Draw a frame around the canvas.
         canvas.drawRect(frame, paint)
+        // Rewind the current path for the next touch
+        curPath.reset()
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -87,7 +101,9 @@ class MyCanvasView(context: Context) : View(context) {
     }
 
     private fun touchUp() {
-        // Reset the path so it doesn't get drawn again.
-        path.reset()
+        // Add the current path to the drawing so far
+        drawing.addPath(curPath)
+        // Rewind the current path for the next touch
+        curPath.reset()
     }
 }
